@@ -62,7 +62,7 @@ function ipc_set(h::Sockets.TCPSocket, name::Symbol, val)
  flush(h)
 end
 
-function ipc_run(h::Sockets.TCPSocket, fun::Union{Expr,Symbol}, args)
+function ipc_run(h::Sockets.TCPSocket, fun::Union{Expr,Symbol}, args::Tuple)
  write(h, 0x03)
  Serialization.serialize(h, fun)
  Serialization.serialize(h, args)

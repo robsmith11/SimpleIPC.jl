@@ -37,7 +37,8 @@ julia> ipc_eval(h, :(println(rand())))
 
 julia> ipc_set(h, :xx, rand(10^6))
 
-julia> ipc_run(h, :println, "hello")
+# Arguments to the function to be run must be passed as a tuple
+julia> ipc_run(h, :println, ("hello",))
 
 julia> ipc_run(h, :println, ("hello ", rand()))
 

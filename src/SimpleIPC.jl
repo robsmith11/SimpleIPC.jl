@@ -10,27 +10,39 @@ export
 import Serialization
 import Sockets
 
+macro async_showerr(ex)
+ quote
+  t = @async while true
+   try
+    eval($(esc(ex)))
+   catch err
+    err isa EOFError && break 
+    bt = catch_backtrace()
+    println("Async error: ")
+    showerror(stderr, err, bt)
+   end
+  end
+ end
+end
+
+
 function ipc_listen(addr::Sockets.InetAddr)
  server = Sockets.listen(addr)
- @async begin
+ @async while true
   socket = Sockets.accept(server)
   Sockets.nagle(socket, false)
-  while true
+  @async_showerr begin
    b = read(socket, UInt8)
-   try
-    if b == 0x01
-     Main.eval(Serialization.deserialize(socket))
-    elseif b == 0x02
-     name = Serialization.deserialize(socket)
-     val = Serialization.deserialize(socket)
-     @eval(Main, $name = $val)
-    elseif b == 0x03
-     fun = Serialization.deserialize(socket)
-     args = Serialization.deserialize(socket)
-     @eval(Main, $fun($args...))
-    end
-   catch e
-    println(STDERR, e)
+   if b == 0x01
+    Main.eval(Serialization.deserialize(socket))
+   elseif b == 0x02
+    name = Serialization.deserialize(socket)
+    val = Serialization.deserialize(socket)
+    @eval(Main, $name = $val)
+   elseif b == 0x03
+    fun = Serialization.deserialize(socket)
+    args = Serialization.deserialize(socket)
+    @eval(Main, $fun($args...))
    end
   end
  end
